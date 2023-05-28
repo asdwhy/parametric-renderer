@@ -68,17 +68,19 @@ fn render_frame(cam: &Camera, surface: &impl Surface, t: f64) {
             // convert to pixel
             let i = (SY as f64 * (x[0] - cam.wl) / (cam.wsize)) as usize;
             let j = (SX as f64 * (x[1] - cam.wt + cam.wsize) / (cam.wsize)) as usize;
-            if d_buff[i][j] < x[2] { v += v_step; continue; }
+            
+            if d_buff[i][j] < x[2] { v += v_step; continue; } // continue if closer point already computed
 
             // compute brightness for pixel
             let mut d = x.clone();
             normalize(&mut d);
-
             let intensity = dot(&n, &d);
+
             if intensity <= 0.0 { v += v_step; continue; } // continue if point invisible
             if intensity < min_max_i.0 { min_max_i.0 = intensity }
             if intensity > min_max_i.1 { min_max_i.1 = intensity }
             
+            // update buffers
             i_buff[i][j] = intensity;
             d_buff[i][j] = x[2];
 
@@ -91,7 +93,7 @@ fn render_frame(cam: &Camera, surface: &impl Surface, t: f64) {
     // now draw the i_buf
     for i in 0..SY {
         for j in 0..SX {
-            // normalized intensity
+            // match normalized intensity to a character
             print!("{}", match (i_buff[i][j] - min_max_i.0) / min_max_i.1 {
                 x if x <= 0.0 => ' ',
                 x if x <= 0.1 => '.',
@@ -107,7 +109,6 @@ fn render_frame(cam: &Camera, surface: &impl Surface, t: f64) {
                 _ => '\0'
             });
         }
-
         println!();
     }
 }
@@ -152,7 +153,6 @@ fn dot(p1: &[f64; 4], p2: &[f64; 4]) -> f64 {
     return p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2]
 }
 
-// cross product ignoring the homogenous component
 fn cross(u: &[f64; 4], v: &[f64; 4]) -> [f64; 4] {
     return [
         u[1] * v[2] - u[2] * v[1],
@@ -162,7 +162,6 @@ fn cross(u: &[f64; 4], v: &[f64; 4]) -> [f64; 4] {
     ];
 }
 
-// normalizes the vector ignoring the 4th homogeneous component
 fn normalize(v: &mut[f64; 4]) {
     let norm = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
     v[0] = v[0] / norm;
@@ -221,7 +220,7 @@ impl Camera {
         }
     }
 
-    // transforms a point from world coordinates to the image plane with pseudodepth
+    // transforms a point from world coordinates to coordinates on the image plane with pseudodepth
     fn perspective_transform(&self, p: [f64; 4]) -> [f64; 4] {
         let pc = mat_vec_mult(self.w2c, p); // camera coordinates
         return [
@@ -293,7 +292,7 @@ impl Surface for Torus {
     }
 
     fn phi(&self, u: f64, v: f64) -> [f64; 4] {
-        // generate point from sphere parametric equation
+        // generate point from torus parametric equation
         let r1 = 0.3;
         let r2 = 0.1;
         return [
