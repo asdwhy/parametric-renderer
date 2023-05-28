@@ -3,4 +3,4 @@
 
 ![](/torus.gif?raw=true "Torus")
 
-#### Compatability not tested with Windows based terminals
+Compatability not tested with Windows based terminals
