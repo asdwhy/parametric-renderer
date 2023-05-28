@@ -1,6 +1,6 @@
 use std::{f64::consts::PI, time, thread};
 
-const SX: usize = 32; // resolution
+const SX: usize = 64; // resolution
 const SY: usize = 32;
 const STEP_SIZE: f64 = 0.007;
 
